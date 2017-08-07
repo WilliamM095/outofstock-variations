@@ -1,0 +1,32 @@
+/* layered navigation hide out of stock items */
+function product_in_stock($post, $product) {
+    if ($_GET['filtering'] == 1 && $_GET['filter_schoenmaat'] > 0 ) {
+        $STOCK = FALSE;
+        $slugmap = array();
+        $attribs = $product->get_variation_attributes();
+        $terms = get_terms( sanitize_title( 'pa_schoenmaat' ));
+        if($terms)foreach($terms as $term)$slugmap[$term->slug]=$term->term_id;
+        $available = $product->get_available_variations();
+        if($available)foreach($available as $instockitem){
+            if(isset($instockitem["attributes"]["attribute_pa_schoenmaat"])){
+				if($instockitem["attributes"]["attribute_pa_schoenmaat"] == $_GET["filter_schoenmaat"] && $instockitem["max_qty"]>0){
+						$STOCK = TRUE;
+				}
+            }
+        }
+        return $STOCK;
+    } else {
+        return true;
+    }
+}
+
+function check_if_out_of_stock(){
+    global $post,$product;
+    $stock = product_in_stock($post,$product);
+    $output = '<div class="';
+    $output .= $stock?"instock":"outofstock";
+    $output .= '">';
+	$output .= $stock?"": "<span class='out-stock'>" . __( 'Not in stock in this size', 'woocommerce' ). "</span>";
+    echo $output;
+}
+add_action( 'woocommerce_before_shop_loop_item', 'check_if_out_of_stock');
